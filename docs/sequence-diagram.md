@@ -1,0 +1,15 @@
+```mermaid
+sequenceDiagram
+    participant User
+    participant pybroom
+    participant OS
+    User->>pybroom: Run find_and_delete(root_dir, dry_run, recursive)
+    pybroom->>pybroom: discover_targets(root_dir, recursive)
+    pybroom->>OS: os.walk, get_dir_size, _safe_getsize
+    OS-->>pybroom: Return file/dir info or error
+    pybroom->>pybroom: Collect targets, logs
+    pybroom->>pybroom: execute_cleanup(targets, dry_run)
+    pybroom->>OS: _safe_rmtree/_safe_remove
+    OS-->>pybroom: Success or error
+    pybroom->>User: Return deleted_items, total_size, all_logs
+```
