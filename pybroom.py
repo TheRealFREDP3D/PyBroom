@@ -1,18 +1,18 @@
 # pybroom.py
+import argparse
 import os
 import shutil
-import argparse
-import threading
-import itertools
 import sys
+import threading
 import time
 
 # --- ASCII broom banner ---
 BROOM_ART = r"""
-   _    _    
-  (_\__/(,_
-   \_/_   _\
-   (_/   (_)   🧹 PyBroom - Sweep away Python clutter
+███████████████████████████████████████████
+█▄─▄▄─█▄─█─▄█▄─▄─▀█▄─▄▄▀█─▄▄─█─▄▄─█▄─▀█▀─▄█
+██─▄▄▄██▄─▄███─▄─▀██─▄─▄█─██─█─██─██─█▄█─██
+▀▄▄▄▀▀▀▀▄▄▄▀▀▄▄▄▄▀▀▄▄▀▄▄▀▄▄▄▄▀▄▄▄▄▀▄▄▄▀▄▄▄▀
+ 🧹🐍 PyBroom - Sweep away Python clutter 🧹🐍
 """
 
 # --- Configuration ---
@@ -57,6 +57,32 @@ def human_readable_size(size_bytes):
     return f"{size_bytes:.2f} {size_name[i]}"
 
 
+def _safe_getsize(path):
+    """Safely get file size, returning (size, error_message)."""
+    try:
+        return os.path.getsize(path), None
+    except (OSError, FileNotFoundError, PermissionError) as e:
+        return 0, f"⚠️ Error accessing {path}: {str(e)}"
+
+
+def _safe_rmtree(path):
+    """Safely remove directory tree, return error message or None if successful."""
+    try:
+        shutil.rmtree(path)
+        return None
+    except (OSError, shutil.Error, FileNotFoundError, PermissionError) as e:
+        return f"⚠️ Error removing directory {path}: {str(e)}"
+
+
+def _safe_remove(path):
+    """Safely remove file, return error message or None if successful."""
+    try:
+        os.remove(path)
+        return None
+    except (OSError, FileNotFoundError, PermissionError) as e:
+        return f"⚠️ Error removing file {path}: {str(e)}"
+
+
 def get_dir_size(path):
     """Return total size of all files in a directory (in bytes)."""
     total = 0
@@ -65,10 +91,10 @@ def get_dir_size(path):
             fp = os.path.join(dirpath, f)
             try:
                 total += os.path.getsize(fp)
-            except OSError:
+            except (OSError, FileNotFoundError, PermissionError) as e:
+                # Skip files that can't be accessed (broken symlinks, permission issues, etc.)
                 continue
     return total
-
 
 def is_venv(path):
     """Check if a directory is a virtual environment.
@@ -104,48 +130,63 @@ def discover_targets(root_dir, recursive=False):
     """Scan the directory tree and identify items to be deleted.
     
     Returns:
-        list: A list of tuples containing (path, kind, size) for each item to delete.
-             kind can be 'dir', 'file', or 'venv'.
+        tuple: (targets, logs) where:
+            - targets: List of (path, kind, size) tuples for items to delete
+            - logs: List of error/warning messages encountered during discovery
+            
+        kind can be 'dir', 'file', or 'venv'.
     """
     targets = []
+    logs = []
     
-    # Using list(dirnames) creates a copy that we can safely iterate over while modifying dirnames
-    for dirpath, dirnames, filenames in os.walk(root_dir, topdown=True):
-        # Check directories (virtual envs and cache dirs)
-        for d in list(dirnames):  # Create a copy to safely modify dirnames during iteration
-            full_path = os.path.join(dirpath, d)
-            if is_venv(full_path):
-                kind = 'venv'
-            elif d in DIRECTORIES_TO_DELETE:
-                kind = 'dir'
-            else:
-                continue
+    try:
+        # Using list(dirnames) creates a copy that we can safely iterate over while modifying dirnames
+        for dirpath, dirnames, filenames in os.walk(root_dir, topdown=True):
+            # Check directories (virtual envs and cache dirs)
+            for d in list(dirnames):  # Create a copy to safely modify dirnames during iteration
+                full_path = os.path.join(dirpath, d)
                 
-            size = get_dir_size(full_path)
-            targets.append((full_path, kind, size))
-            dirnames.remove(d)  # Prevent further processing of this directory
-        
-        # Check files and directories with deletable suffixes
-        for item in list(filenames) + list(dirnames):
-            full_path = os.path.join(dirpath, item)
-            is_dir = item in dirnames
+                try:
+                    if is_venv(full_path):
+                        kind = 'venv'
+                    elif d in DIRECTORIES_TO_DELETE:
+                        kind = 'dir'
+                    else:
+                        continue
+                        
+                    size = get_dir_size(full_path)
+                    targets.append((full_path, kind, size))
+                    dirnames.remove(d)  # Prevent further processing of this directory
+                except (OSError, FileNotFoundError, PermissionError) as e:
+                    error_msg = f"⚠️ Error accessing {full_path}: {str(e)}"
+                    logs.append(error_msg)
+                    continue
             
-            # Skip if no matching suffix
-            if not any(item.endswith(suffix) for suffix in SUFFIXES_TO_DELETE):
-                continue
+            # Check files and directories with deletable suffixes
+            for item in list(filenames) + list(dirnames):
+                full_path = os.path.join(dirpath, item)
+                is_dir = item in dirnames
                 
-            try:
-                size = get_dir_size(full_path) if is_dir else os.path.getsize(full_path)
+                # Skip if no matching suffix
+                if not any(item.endswith(suffix) for suffix in SUFFIXES_TO_DELETE):
+                    continue
+                    
+                size, error = _safe_getsize(full_path) if not is_dir else (get_dir_size(full_path), None)
+                if error:
+                    logs.append(error)
+                    continue
+                    
                 targets.append((full_path, 'dir' if is_dir else 'file', size))
-                if is_dir:
+                if is_dir and item in dirnames:
                     dirnames.remove(item)  # Prevent further processing of this directory
-            except OSError:
-                continue
-                
-        if not recursive:
-            dirnames.clear()  # Clear to prevent descending into subdirectories
             
-    return targets
+            if not recursive:
+                dirnames.clear()  # Clear to prevent descending into subdirectories
+    except (OSError, FileNotFoundError, PermissionError) as e:
+        error_msg = f"⚠️ Error scanning directory {root_dir}: {str(e)}"
+        logs.append(error_msg)
+                
+    return targets, logs
 
 
 def execute_cleanup(targets, dry_run=False):
@@ -163,9 +204,14 @@ def execute_cleanup(targets, dry_run=False):
     logs = []
     
     for path, kind, size in targets:
+        # Skip if path no longer exists
+        if not os.path.exists(path):
+            logs.append(f"⚠️ Skipping {path}: No longer exists")
+            continue
+            
         # Determine icon and description based on item type
         if kind == 'venv':
-            icon = "📦"
+            icon = "👨🏻‍💻"
             desc = os.path.basename(path)
         elif kind == 'dir':
             icon = "📂"
@@ -173,22 +219,33 @@ def execute_cleanup(targets, dry_run=False):
         else:  # file
             icon = "📄"
             desc = os.path.basename(path)
-            
-        logs.append(f"{icon} {desc:20} {human_readable_size(size)}")
         
-        if not dry_run:
-            try:
-                if kind in ('venv', 'dir'):
-                    shutil.rmtree(path)
-                else:
-                    os.remove(path)
-                deleted_items.append((path, size))
-                total_size += size
-            except OSError as e:
-                logs.append(f"⚠️ Error deleting {path}: {e}")
-        else:
+        # Log the item being processed
+        log_entry = f"{icon} {desc:20} {human_readable_size(size)}"
+        logs.append(log_entry)
+        
+        if dry_run:
             deleted_items.append((path, size))
             total_size += size
+            continue
+            
+        # Perform the actual deletion
+        try:
+            if kind in ('venv', 'dir'):
+                error = _safe_rmtree(path)
+            else:
+                error = _safe_remove(path)
+                
+            if error:
+                logs.append(error)
+            else:
+                deleted_items.append((path, size))
+                total_size += size
+                logs[-1] = f"✓ {log_entry}"  # Add checkmark to indicate success
+                
+        except Exception as e:  # Catch any unexpected errors
+            error_msg = f"⚠️ Unexpected error processing {path}: {str(e)}"
+            logs.append(error_msg)
             
     return deleted_items, total_size, logs
 
@@ -196,10 +253,15 @@ def execute_cleanup(targets, dry_run=False):
 def find_and_delete(root_dir, dry_run=False, recursive=False):
     """Find and delete specified directories, files, and virtual environments."""
     # Phase 1: Discover all targets
-    targets = discover_targets(root_dir, recursive)
+    targets, discovery_logs = discover_targets(root_dir, recursive)
     
     # Phase 2: Execute cleanup on all targets
-    return execute_cleanup(targets, dry_run)
+    deleted_items, total_size, cleanup_logs = execute_cleanup(targets, dry_run)
+    
+    # Combine logs from both phases
+    all_logs = discovery_logs + cleanup_logs
+    
+    return deleted_items, total_size, all_logs
 
 
 class Spinner:

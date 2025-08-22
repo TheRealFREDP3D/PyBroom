@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="pybroom",
-    version="0.1.0",
+    version="0.1.2",
     py_modules=["pybroom"],
     entry_points={
         "console_scripts": [
