@@ -1,62 +1,105 @@
-# PyBroom 🧹
+# 🧹 PyBroom
 
-Sweep away Python clutter!  
-Removes `__pycache__` folders and Python virtual environments with a single command.
+**PyBroom** is a simple Python CLI tool that sweeps away common project clutter:  
+virtual environments, `__pycache__` directories, build artifacts, and more.  
+Think of it like `cargo clean` for Python projects.
 
-## 1. Installation
+---
 
+## ✨ Features
+- Detects and deletes:
+  - Virtual environments (`venv`, `.venv`, `env`, `.env`, or detected by config files).
+  - `__pycache__` folders.
+  - Build/test artifacts:
+    - `.pytest_cache`
+    - `.mypy_cache`
+    - `.ruff_cache`
+    - `.tox`
+    - `.hypothesis`
+    - `build/` and `dist/`
+    - `*.egg-info`
+- **Dry-run mode** (`--dry-run`) to preview what would be deleted.
+- **Recursive scan** (`--recursive`) or top-level only (default).
+- **Disk usage summary**: reports how much space was reclaimed.
+- **Fun broom animation** while sweeping 🧹
+
+---
+
+## 🚀 Installation
+
+Clone and run directly:
+```bash
+git clone https://github.com/TheRealFREDP3D/PyBroom.git
+cd PyBroom
+python pybroom.py --help
+```
+
+Or install locally as a CLI:
 ```bash
 pip install .
 ```
 
+After install you can just run:
+```bash
+pybroom --help
+```
+
 ---
 
-## 2. Usage
+## 🛠 Usage
 
-Do a dry run to see code execution without removing files
+```bash
+# Show help
+pybroom --help
 
-```sh
-pybroom --path /my/project --dry-run
+# Clean only top-level clutter
+pybroom --path .
+
+# Clean recursively (subfolders too)
+pybroom --path . --recursive
+
+# Preview without deleting
+pybroom --path . --recursive --dry-run
 ```
 
-Execute script and delete Python cache and virtual environment files
+Example output:
+```
+🧹 PyBroom - Sweep away Python clutter
 
-```sh
-pybroom --path /my/project
+Starting cleanup in: ./myproject (recursive)
+
+Sweeping project... 🧹
+Done sweeping! 🧹   
+
+--- Detected Items (dry run) ---
+📦 .venv                 524.98 KB
+🗂️ __pycache__           45.12 KB
+📄 mypkg.egg-info        2.10 KB
+
+--- Summary ---
+Would delete 3 items, total size 572.20 KB
 ```
 
-## 3. clean2.py details
+---
 
-Purpose
-- Recursively scans a starting directory and:
-  - Detects and deletes Python virtual environments (names like `venv`, `.venv`, `env`, `.env`, or folders containing indicators like `pyvenv.cfg`, `bin/activate`, `Scripts/activate.bat`).
-  - Deletes Python cache directories named `__pycache__`.
-- Supports a dry-run mode to preview what would be deleted.
+## 📦 Roadmap
+- [ ] Config file (`.pybroom.json`) for custom cleanup patterns.
+- [ ] Exclusion patterns (e.g., `--exclude node_modules`).
+- [ ] Colored output with `rich`.
+- [ ] Git hook integration (auto-clean before commit).
 
-How it works
-- Prints a small ASCII banner at start.
-- Identifies virtual environments by folder name or by common venv indicators.
-- Walks the directory tree top-down; when a target directory is found, it is deleted (or listed in dry-run) and skipped from further traversal.
-- Errors during deletion are caught and printed.
+---
 
-Examples
-- Preview from the current directory:
-  - `python clean2.py --dry-run`
-- Actually delete from the current directory:
-  - `python clean2.py`
-- Target a specific folder:
-  - `python clean2.py --path "/path/to/project"`
+## Contributing
+Contributions are welcome!  
+Open an issue or PR to suggest improvements.
 
-Customization
-- Adjust what counts as a venv via `DEFAULT_VENV_NAMES` and `VENV_INDICATORS`.
-- Add more cache directories to delete by editing `DIRECTORIES_TO_DELETE` (e.g., add `.pytest_cache`, `.mypy_cache`).
+---
 
-## 4. Author
+## License
 
-**Frederick Pellerin**
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-|-----				  						|
-|Mail     	fredp3d@proton.me 				|
-|[X](https://x.com/therealfredp3d)		|
-|[Github](https://github.com/therealfredp3d)	|
-|[Website](https://therealfred.ca)				|
+---
+
+Made with by Frederick Pellerin 2025 Frederick Pellerin
