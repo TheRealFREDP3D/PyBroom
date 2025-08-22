@@ -1,0 +1,27 @@
+            - name: Sourcery Action
+  # You may pin to the exact commit or the version.
+  # uses: sourcery-ai/action@438ce67e9f15fbeacb72257da23e2fffb1b6d354
+  uses: sourcery-ai/action@v1
+  with:
+    # The Sourcery token for logging in.
+The Sourcery token can be retrieved from  [your dashboard](https://sourcery.ai/dashboard/profile) and uploaded to your GitHub repository as a  [GitHub secret](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
+
+    token: 
+    # File(s) or directory(ies) to review.
+    target: # optional, default is .
+    # Sourcery CLI version, e.g. '0.12.12'. If empty, default to the latest version  available.
+
+    version: # optional, default is 
+    # Verbose output with explanation and code snippets. Either 'true' or 'false'.
+
+    verbose: # optional, default is true
+    # Fail job if issues are found. Either 'true' or 'false'.
+    check: # optional, default is true
+    # Change files in place. Either 'true' or 'false'.
+    in_place: # optional, default is false
+    # Location of the Sourcery YAML configuration file.
+    config: # optional, default is 
+    # Reference to compare the current branch with and run Sourcery on the diff. If empty, run Sourcery on the entire codebase. To review only code that changed in a PR, use "github.event.pull_request.base.sha".
+
+    diff_ref: # optional, default is 
+          
