@@ -53,11 +53,10 @@ def get_dir_size(path):
     for dirpath, _, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            if os.path.isfile(fp):
-                try:
-                    total += os.path.getsize(fp)
-                except OSError:
-                    pass
+            try:
+                total += os.path.getsize(fp)
+            except OSError:
+                continue
     return total
 
 
@@ -97,26 +96,27 @@ def find_and_delete(root_dir, dry_run=False, recursive=False):
                     total_size += size
                 dirnames.remove(d)
 
-        # Files (*.egg-info, etc.)
+        # Process files with deletable suffixes
         for f in list(filenames):
-            for suffix in FILE_SUFFIXES_TO_DELETE:
-                if f.endswith(suffix):
-                    full_path = os.path.join(dirpath, f)
-                    try:
-                        size = os.path.getsize(full_path)
-                    except OSError:
-                        size = 0
-                    logs.append(f"📄 {f:20} {human_readable_size(size)}")
-                    if not dry_run:
-                        try:
-                            os.remove(full_path)
+            full_path = os.path.join(dirpath, f)
+            try:
+                size = os.path.getsize(full_path)
+                for suffix in FILE_SUFFIXES_TO_DELETE:
+                    if f.endswith(suffix):
+                        logs.append(f"📄 {f:20} {human_readable_size(size)}")
+                        if not dry_run:
+                            try:
+                                os.remove(full_path)
+                                deleted_items.append((full_path, size))
+                                total_size += size
+                            except OSError as e:
+                                logs.append(f"⚠️ Error deleting {full_path}: {e}")
+                        else:
                             deleted_items.append((full_path, size))
                             total_size += size
-                        except OSError as e:
-                            logs.append(f"⚠️ Error deleting {full_path}: {e}")
-                    else:
-                        deleted_items.append((full_path, size))
-                        total_size += size
+                        break
+            except OSError:
+                continue
 
         if not recursive:
             dirnames.clear()

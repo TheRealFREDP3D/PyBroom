@@ -29,8 +29,8 @@ Think of it like `cargo clean` for Python projects.
 
 Clone and run directly:
 ```bash
-git clone https://github.com/yourname/pybroom.git
-cd pybroom
+git clone https://github.com/TheRealFREDP3D/PyBroom.git
+cd PyBroom
 python pybroom.py --help
 ```
 
@@ -90,11 +90,16 @@ Would delete 3 items, total size 572.20 KB
 
 ---
 
-## 🤝 Contributing
+## Contributing
 Contributions are welcome!  
 Open an issue or PR to suggest improvements.
 
 ---
 
-## 📜 License
-MIT License © 2025 Your Name
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Made with by Frederick Pellerin 2025 Frederick Pellerin
