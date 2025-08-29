@@ -97,14 +97,6 @@ pybroom --path . --recursive --dry-run
 
 ---
 
-## 📦 Roadmap
-- [ ] Config file (`.pybroom.json`) for custom cleanup patterns.
-- [ ] Exclusion patterns (e.g., `--exclude node_modules`).
-- [ ] Colored output with `rich`.
-- [ ] Git hook integration (auto-clean before commit).
-
----
-
 ## Contributing
 Contributions are welcome!  
 Open an issue or PR to suggest improvements.
@@ -117,4 +109,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Made with by Frederick Pellerin 2025 Frederick Pellerin
+Made by Frederick Pellerin
