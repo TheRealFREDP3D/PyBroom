@@ -4,8 +4,11 @@
 virtual environments, `__pycache__` directories, build artifacts, and more.  
 Think of it like `cargo clean` for Python projects.
 
+---
 
-```sh
+```bash
+# Example output
+
 ███████████████████████████████████████████
 █▄─▄▄─█▄─█─▄█▄─▄─▀█▄─▄▄▀█─▄▄─█─▄▄─█▄─▀█▀─▄█
 ██─▄▄▄██▄─▄███─▄─▀██─▄─▄█─██─█─██─██─█▄█─██
@@ -23,7 +26,7 @@ Done sweeping! 🧹
 ✓ 📂 .pytest_cache        542.00 B
 ✓ 📂 __pycache__          155.00 B
 ✓ 📂 __pycache__          1.27 KB
-[...]
+[...snip...]
 ✓ 📂 __pycache__          14.91 KB
 ✓ 📂 __pycache__          158.00 B
 ✓ 📂 __pycache__          9.10 KB
@@ -90,24 +93,6 @@ pybroom --path . --recursive
 
 # Preview without deleting
 pybroom --path . --recursive --dry-run
-```
-
-Example output:
-```
-🧹 PyBroom - Sweep away Python clutter
-
-Starting cleanup in: ./myproject (recursive)
-
-Sweeping project... 🧹
-Done sweeping! 🧹   
-
---- Detected Items (dry run) ---
-📦 .venv                 524.98 KB
-🗂️ __pycache__           45.12 KB
-📄 mypkg.egg-info        2.10 KB
-
---- Summary ---
-Would delete 3 items, total size 572.20 KB
 ```
 
 ---
